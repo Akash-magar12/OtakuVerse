@@ -5,7 +5,6 @@ import { Toaster } from "react-hot-toast";
 
 const AuthLayout = () => {
   const { isLogin } = useSelector((store) => store.toggle);
-  console.log(isLogin);
 
   return (
     <div className="">

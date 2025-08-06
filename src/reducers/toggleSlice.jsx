@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const toggleSlice = createSlice({
   name: "toggle",
   initialState: {
-    isLogin: false,
+    isLogin: true,
   },
   reducers: {
     showLogin: (state) => {
