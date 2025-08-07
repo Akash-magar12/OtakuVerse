@@ -3,19 +3,21 @@ import { Cherry, Shield, Mail, Eye, EyeOff, Heart, Star } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { showLogin } from "../reducers/toggleSlice";
 import { useDispatch } from "react-redux";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
+import { doc, setDoc } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [data, setData] = useState({
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const handleChange = (e) => {
@@ -25,21 +27,36 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitted:", data);
+    setLoading(true);
     try {
+      // ✅ Step 1: Create user with email & password using Firebase Auth
       const credential = await createUserWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
+
       const user = credential.user;
-      await updateProfile(user, {
-        displayName: data.username,
-      });
-      console.log(user);
-      navigate("/home");
+      // // OPTIONAL: Set display name in Firebase Auth
+      // await updateProfile(user, {
+      //   displayName: data.username,
+      // });
+
+      // ✅Step 2: Prepare user details to save in Firestore
+      const userDetail = {
+        name: data.username,
+        email: data.email,
+      };
+      // Step 3: Save user data in Firestore using their UID as doc ID
+      await setDoc(doc(db, "users", user.uid), userDetail);
+
+      // ✅ Success toast message
+      toast.success("Welcome to OtakuVerse!");
     } catch (error) {
       console.log(error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,18 +168,17 @@ const Signup = () => {
           </div>
 
           {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              className="w-full py-2 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md shadow-black/50 relative overflow-hidden group"
-            >
-              <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
-                <Star className="h-4 w-4 mr-2 group-hover:animate-spin" />
-                Join the Adventure
-              </span>
-              <span className="absolute inset-0 h-full w-0 bg-gray-600 transition-all duration-300 group-hover:w-full"></span>
-            </button>
-          </div>
+          <button
+            disabled={loading}
+            type="submit"
+            className="w-full py-2 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md shadow-black/50 relative overflow-hidden group"
+          >
+            <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
+              <Star className="h-4 w-4 mr-2 group-hover:animate-spin" />
+              {loading ? "Summoning Your Account..." : "Join the Adventure"}
+            </span>
+            <span className="absolute inset-0 h-full w-0 bg-gray-600 transition-all duration-300 group-hover:w-full"></span>
+          </button>
         </form>
 
         {/* Divider */}
