@@ -1,11 +1,11 @@
-// src/store/store.js
 import { configureStore } from "@reduxjs/toolkit";
-import toggleReducer from "../reducers/toggleSlice"; // adjust the path if needed
+import toggleReducer from "../reducers/toggleSlice";
+import userSlice from "../reducers/userSlice";
 
 const store = configureStore({
   reducer: {
     toggle: toggleReducer,
-
+    user: userSlice,
   },
 });
 

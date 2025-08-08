@@ -8,23 +8,53 @@ import {
   Home,
   Film,
   Award,
-  User,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
+import { Link, useNavigate } from "react-router-dom";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { useDispatch, useSelector } from "react-redux";
+import { logOutUser, setUser } from "../reducers/userSlice";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const toggleMenu = () => setMenuOpen(!menuOpen);
   const closeMenu = () => setMenuOpen(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((store) => store.user);
+  function getInitials(name) {
+    if (!name) return "";
+
+    const parts = name.trim().split(" ");
+    if (parts.length === 1) {
+      return parts[0][0].toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+  }
   useEffect(() => {
-    const loggedUser = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        dispatch(
+          setUser({
+            uid: user.uid,
+            username: user.displayName,
+            email: user.email,
+            photoUrl: user.photoURL,
+          })
+        );
+      } else {
+        dispatch(logOutUser());
+      }
     });
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  console.log(user);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/");
+  };
   return (
     <div className="relative z-20">
       <nav className="fixed top-0 left-0 w-full backdrop-blur-md bg-black/80 text-white shadow-md z-50">
@@ -57,12 +87,26 @@ const Navbar = () => {
                 <Search className="h-4 w-4" />
               </button>
 
-              <div className="hidden md:flex items-center gap-1 px-3 py-1 bg-gray-700/50 text-sm text-gray-200 rounded-full">
-                <User className="h-4 w-4" />
-                <span>{user?.displayName}</span>
+              {/* Desktop Avatar */}
+              {/* Desktop Avatar */}
+              <div className="hidden md:flex items-center">
+                {user?.photoUrl ? (
+                  <img
+                    src={user?.photoUrl}
+                    alt={user?.displayName || "User"}
+                    className="w-9 h-9 rounded-full object-cover border border-gray-700 shadow-md"
+                  />
+                ) : (
+                  <div className="w-9 h-9 flex items-center justify-center rounded-full bg-indigo-400 text-white font-bold shadow-md">
+                    {getInitials(user?.displayName || user?.username)}
+                  </div>
+                )}
               </div>
 
-              <button className="hidden md:flex px-3 py-1.5 rounded-md bg-gray-900/80 border border-gray-600/50 text-white text-sm transition duration-300 group items-center gap-1">
+              <button
+                onClick={handleLogout}
+                className="hidden md:flex px-3 py-1.5 rounded-md bg-gray-900/80 border border-gray-600/50 text-white text-sm transition duration-300 group items-center gap-1"
+              >
                 <LogOut className="h-4 w-4 mr-1" />
                 <span>Logout</span>
               </button>
@@ -70,7 +114,7 @@ const Navbar = () => {
               {/* Hamburger Icon */}
               <button
                 onClick={toggleMenu}
-                className="md:hidden p-2 rounded-md text-gray-300 hover:text-white"
+                className="md:hidden p-2  rounded-md text-gray-300 hover:text-white"
               >
                 {menuOpen ? (
                   <X className="h-6 w-6" />
@@ -113,9 +157,21 @@ const Navbar = () => {
               />
 
               {/* Mobile user */}
-              <div className="mt-3 px-3 py-2 flex items-center gap-2 bg-gray-700/40 text-sm text-gray-200 rounded-md">
-                <User className="h-4 w-4" />
-                <span>User</span>
+              <div className="mt-3 px-3 flex items-center gap-3">
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user?.displayName || "User"}
+                    className="w-9 h-9 rounded-full object-cover border border-gray-700 shadow-md"
+                  />
+                ) : (
+                  <div className="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-md">
+                    {getInitials(user?.displayName || user?.username)}
+                  </div>
+                )}
+                <span className="text-sm capitalize text-gray-200">
+                  {user?.displayName || user?.username}
+                </span>
               </div>
             </div>
           </div>
@@ -129,10 +185,7 @@ const Navbar = () => {
 };
 
 const NavLink = ({ icon, label }) => (
-  <Link
-    to="/"
-    className="flex items-center gap-1 py-2 text-gray-300 hover:text-white relative group"
-  >
+  <Link className="flex items-center gap-1 py-2 text-gray-300 hover:text-white relative group">
     {icon}
     <span>{label}</span>
     <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-white group-hover:w-full transition-all duration-300" />

@@ -208,7 +208,7 @@ const Signup = () => {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-3 flex items-center"
+                  className="absolute  inset-y-0 right-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -225,9 +225,9 @@ const Signup = () => {
           <button
             disabled={loading}
             type="submit"
-            className="w-full py-2 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md shadow-black/50 relative overflow-hidden group"
+            className="w-full cursor-pointer py-2 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md shadow-black/50 relative overflow-hidden group"
           >
-            <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
+            <span className="relative cursor-pointer z-10 flex items-center justify-center text-sm sm:text-base">
               <Star className="h-4 w-4 mr-2 group-hover:animate-spin" />
               {loading ? "Summoning Your Account..." : "Join the Adventure"}
             </span>

@@ -1,5 +1,4 @@
 import Navbar from "../Components/Navbar";
-import Home from "./Home";
 
 const MainLayout = () => {
   return (
