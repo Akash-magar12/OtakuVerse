@@ -3,10 +3,14 @@ import { Cherry, Shield, Mail, Eye, EyeOff, Heart, Star } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { showLogin } from "../reducers/toggleSlice";
 import { useDispatch } from "react-redux";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../config/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
+import { auth, db, provider } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 const Signup = () => {
@@ -14,22 +18,34 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Controlled form state
   const [data, setData] = useState({
     username: "",
     email: "",
     password: "",
   });
 
+  // Handle input changes for all fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // ========================
+  // 📌 Email/Password Signup
+  // ========================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
-      // ✅ Step 1: Create user with email & password using Firebase Auth
+      // Basic validation
+      if (!data.email || !data.password || !data.username) {
+        return toast.error("All fields required");
+      }
+
+      // Create Firebase Auth account
       const credential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -37,21 +53,23 @@ const Signup = () => {
       );
 
       const user = credential.user;
-      // // OPTIONAL: Set display name in Firebase Auth
-      // await updateProfile(user, {
-      //   displayName: data.username,
-      // });
-
-      // ✅Step 2: Prepare user details to save in Firestore
+      //update dsplay name
+      await updateProfile(user, {
+        displayName: data.username,
+      });
+      // Prepare Firestore data
       const userDetail = {
         name: data.username,
         email: data.email,
+        createdAt: serverTimestamp(),
       };
-      // Step 3: Save user data in Firestore using their UID as doc ID
+
+      // Use UID as doc ID to avoid duplicate docs for same user
       await setDoc(doc(db, "users", user.uid), userDetail);
 
-      // ✅ Success toast message
       toast.success("Welcome to OtakuVerse!");
+      setData({ user: "", email: "", password: "" });
+      navigate("/home");
     } catch (error) {
       console.log(error);
       toast.error(error.message);
@@ -60,6 +78,42 @@ const Signup = () => {
     }
   };
 
+  // ========================
+  // 📌 Google Signup/Login
+  // ========================
+  const handleGoogle = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const credential = await signInWithPopup(auth, provider);
+      const user = credential.user;
+
+      // ⚠ In Google signup, data.username and data.email will be empty
+      // Better to use user.displayName & user.email from Google profile
+      const userDetail = {
+        name: user.displayName,
+        email: user.email,
+        createdAt: serverTimestamp(),
+        photoUrl: user.photoURL,
+      };
+
+      // This will overwrite existing doc if user already exists (safe)
+      await setDoc(doc(db, "users", user.uid), userDetail, { merge: true });
+
+      toast.success("Welcome to OtakuVerse!");
+      navigate("/home");
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================
+  // 📌 UI Section
+  // ========================
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:py-12 overflow-y-auto relative">
       {/* Background Image */}
@@ -76,7 +130,7 @@ const Signup = () => {
 
       {/* Signup Card */}
       <div className="w-full max-w-lg bg-black/80 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-500/30 relative z-10">
-        {/* Corners */}
+        {/* Decorative Corners */}
         <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-white/70 rounded-tl-xl"></div>
         <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-white/70 rounded-tr-xl"></div>
         <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-white/70 rounded-bl-xl"></div>
@@ -96,7 +150,7 @@ const Signup = () => {
           </p>
         </div>
 
-        {/* Form */}
+        {/* Signup Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="bg-black/90 p-4 sm:p-5 rounded-lg border border-gray-500/30 shadow-md shadow-gray-900/20">
             {/* Username */}
@@ -191,8 +245,9 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* Google Login */}
+          {/* Google Auth Button */}
           <button
+            onClick={handleGoogle}
             type="button"
             className="w-full flex items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
           >

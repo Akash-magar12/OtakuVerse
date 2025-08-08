@@ -3,12 +3,16 @@ import { Cherry, Mail, Eye, EyeOff, Star, Lock } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
 import { showSignup } from "../reducers/toggleSlice";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { auth, db, provider } from "../config/firebase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -24,18 +28,59 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      if (!data.password || !data.email) {
+        return toast.error("All fields required");
+      }
       const credential = await signInWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
       const user = credential.user;
-
       console.log(user);
+
+      toast.success("Welcome to OtakuVerse!");
+      setData({ email: "", password: "" });
+
       navigate("/home");
     } catch (error) {
       console.log(error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleGoogle = async () => {
+    try {
+      // Open the Google sign-in popup
+      const result = await signInWithPopup(auth, provider);
+
+      // Get the signed-in user's data
+      const user = result.user;
+
+      // Reference to the user's document in Firestore
+      // This will store data under the collection "users" with the document ID as the user's UID
+      const userRef = doc(db, "users", user.uid);
+
+      // Prepare user data for Firestore
+      const userData = {
+        name: user.displayName, // User's full name from Google
+        email: user.email, // User's email from Google
+        photo: user.photoURL, // User's profile picture
+        createdAt: serverTimestamp(),
+      };
+
+      // Save the user data in Firestore (overwrites if already exists)
+      await setDoc(userRef, userData);
+
+      toast.success("Welcome to OtakuVerse!");
+      navigate("/home");
+    } catch (error) {
+      // If something goes wrong, log the error
+      console.error("Google sign-in error:", error);
+      toast.error(error.message);
     }
   };
 
@@ -130,12 +175,15 @@ const Login = () => {
           {/* Submit */}
           <div>
             <button
+              disabled={loading}
               type="submit"
-              className="w-full py-2 sm:py-2.5 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md relative overflow-hidden group"
+              className="w-full py-2 sm:py-2.5 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
                 <Star className="h-4 w-4 mr-2 group-hover:animate-spin" />
-                Enter the Anime World
+                {loading
+                  ? "Summoning Your Account..."
+                  : "Enter the Anime World"}
               </span>
               <span className="absolute inset-0 h-full w-0 bg-gray-600 transition-all duration-300 group-hover:w-full"></span>
             </button>
@@ -153,6 +201,7 @@ const Login = () => {
           </div>
 
           <button
+            onClick={handleGoogle}
             type="button"
             className="w-full flex items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all text-sm sm:text-base"
           >
