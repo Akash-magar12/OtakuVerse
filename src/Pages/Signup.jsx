@@ -208,7 +208,7 @@ const Signup = () => {
                 />
                 <button
                   type="button"
-                  className="absolute  inset-y-0 right-3 flex items-center"
+                  className="absolute cursor-pointer   inset-y-0 right-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -249,7 +249,7 @@ const Signup = () => {
           <button
             onClick={handleGoogle}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
+            className="w-full flex cursor-pointer  items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all duration-300 text-sm sm:text-base"
           >
             <FcGoogle className="text-2xl" />
             <span>Continue with Google</span>

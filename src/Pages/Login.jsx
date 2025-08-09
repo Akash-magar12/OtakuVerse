@@ -177,7 +177,7 @@ const Login = () => {
             <button
               disabled={loading}
               type="submit"
-              className="w-full py-2 sm:py-2.5 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full cursor-pointer  py-2 sm:py-2.5 px-4 rounded-md bg-gray-900/80 border border-gray-600/50 text-white font-medium shadow-md relative overflow-hidden group disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span className="relative z-10 flex items-center justify-center text-sm sm:text-base">
                 <Star className="h-4 w-4 mr-2 group-hover:animate-spin" />
@@ -203,7 +203,7 @@ const Login = () => {
           <button
             onClick={handleGoogle}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all text-sm sm:text-base"
+            className="w-full cursor-pointer  flex items-center justify-center gap-3 py-2 px-4 rounded-md bg-white text-black font-medium shadow-md hover:shadow-lg transition-all text-sm sm:text-base"
           >
             <FcGoogle className="text-xl" />
             Continue with Google

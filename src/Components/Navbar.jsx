@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Search,
   Menu,
@@ -8,6 +8,9 @@ import {
   Home,
   Film,
   Award,
+  User,
+  Heart,
+  Edit,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -17,15 +20,18 @@ import { logOutUser, setUser } from "../reducers/userSlice";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((store) => store.user);
 
-  // Toggle mobile menu open/close
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const closeMenu = () => setMenuOpen(false);
 
-  // Get initials for user without photo
+  const toggleAvatarMenu = () => setAvatarMenuOpen((prev) => !prev);
+  const closeAvatarMenu = () => setAvatarMenuOpen(false);
+
   const getInitials = (name) => {
     if (!name) return "";
     const parts = name.trim().split(" ");
@@ -34,7 +40,6 @@ const Navbar = () => {
       : (parts[0][0] + parts[1][0]).toUpperCase();
   };
 
-  // Listen for auth state change to set or clear user info in redux
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
@@ -50,21 +55,30 @@ const Navbar = () => {
         dispatch(logOutUser());
       }
     });
-
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
+  // Close avatar dropdown if clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Sign out and redirect home
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
   };
+
   const handleSearchClick = () => {
     navigate("/search");
-    setMenuOpen(false); // also close dropdown on mobile
+    setMenuOpen(false);
   };
-  // User avatar component for reuse
+
   const UserAvatar = () => {
     if (user?.photoUrl) {
       return (
@@ -86,11 +100,7 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-black/80 text-white shadow-md">
       <nav className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link
-          to="/home"
-          className="flex items-center gap-2 group select-none"
-          aria-label="Go to homepage"
-        >
+        <Link to="/home" className="flex items-center gap-2 group select-none">
           <div className="relative">
             <div className="absolute -top-1 -left-1 w-8 h-8 bg-indigo-500/30 rounded-full blur-md animate-pulse" />
             <Cherry className="h-6 w-6 text-indigo-400 relative z-10 group-hover:scale-110 transition-transform" />
@@ -124,36 +134,58 @@ const Navbar = () => {
 
         {/* Right controls */}
         <div className="flex items-center gap-4">
-          {/* Search button */}
+          {/* Search */}
           <button
             onClick={handleSearchClick}
-            className="hidden md:block p-2 bg-gray-900/80 rounded-full border border-gray-700/50 text-gray-300 hover:text-white transition duration-200 hover:border-gray-500"
-            aria-label="Search"
+            className="hidden md:block p-2 bg-gray-900/80 rounded-full border border-gray-700/50 text-gray-300 hover:text-white hover:border-gray-500"
           >
             <Search className="h-4 w-4" />
           </button>
 
-          {/* User avatar desktop */}
-          <div className="hidden md:flex items-center">
-            {user && <UserAvatar />}
-          </div>
+          {/* Avatar dropdown */}
+          {user && (
+            <div className="hidden md:flex relative" ref={avatarRef}>
+              <div
+                onClick={toggleAvatarMenu}
+                className="cursor-pointer flex items-center"
+              >
+                <UserAvatar />
+              </div>
 
-          {/* Logout desktop */}
-          <button
-            onClick={handleLogout}
-            className="hidden md:flex items-center gap-1 px-3 py-1.5 rounded-md bg-gray-900/80 border border-gray-600/50 text-white text-sm transition duration-300 hover:bg-gray-800"
-            aria-label="Logout"
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
+              {avatarMenuOpen && (
+                <div className="absolute right-0 mt-12 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
+                  <Link
+                    to="/edit-profile"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
+                    onClick={closeAvatarMenu}
+                  >
+                    <Edit className="h-4 w-4" /> Edit Profile
+                  </Link>
+                  <Link
+                    to="/favourite"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
+                    onClick={closeAvatarMenu}
+                  >
+                    <Heart className="h-4 w-4" /> Favourite
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      closeAvatarMenu();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white w-full text-left"
+                  >
+                    <LogOut className="h-4 w-4" /> Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Mobile menu toggle */}
           <button
             onClick={toggleMenu}
-            className="md:hidden p-2 rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
+            className="md:hidden p-2 rounded-md text-gray-300 hover:text-white"
           >
             {menuOpen ? (
               <X className="h-6 w-6" />
@@ -192,6 +224,18 @@ const Navbar = () => {
               label="Search"
               close={closeMenu}
             />
+            <MobileNavLink
+              to="/edit-profile"
+              icon={<Edit className="h-5 w-5" />}
+              label="Edit Profile"
+              close={closeMenu}
+            />
+            <MobileNavLink
+              to="/favourite"
+              icon={<Heart className="h-5 w-5" />}
+              label="Favourite"
+              close={closeMenu}
+            />
             <button
               onClick={() => {
                 handleLogout();
@@ -199,25 +243,11 @@ const Navbar = () => {
               }}
               className="w-full text-left px-3 py-2 flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-800/70 rounded-md"
             >
-              <LogOut className="h-5 w-5" />
-              Logout
+              <LogOut className="h-5 w-5" /> Logout
             </button>
-
-            {/* Mobile user info */}
-            {user && (
-              <li className="mt-3 px-3 flex items-center gap-3">
-                <UserAvatar />
-                <span className="text-sm capitalize text-gray-200">
-                  {user.username}
-                </span>
-              </li>
-            )}
           </ul>
         </nav>
       )}
-
-      {/* Decorative bottom border */}
-      <div className="absolute top-full left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-gray-300/30 to-transparent"></div>
     </header>
   );
 };
