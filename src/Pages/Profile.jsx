@@ -1,35 +1,29 @@
 import { useEffect, useState } from "react";
 import { User, X, Edit3 } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
+import axios from "axios";
+import { setUser } from "../reducers/userSlice";
 
 const Profile = () => {
   const user = useSelector((store) => store.user);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(user?.photoUrl || null);
-  const [data, setData] = useState({
-    name: "",
-    email: "",
-  });
-  console.log(user);
+  const [name, setName] = useState("");
+
+  const CLOUD_NAME = import.meta.env.VITE_CLOUD_NAME;
+  const UPLOAD_PRESET = import.meta.env.VITE_UPLOAD_PRESET;
+
   useEffect(() => {
     if (user) {
-      setData({
-        name: user?.username || "",
-        email: user?.email || "",
-      });
+      setName(user?.username || "");
       setPreviewUrl(user?.photoUrl || null);
-      
     }
   }, [user]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -41,13 +35,45 @@ const Profile = () => {
   };
 
   const handleEdit = async () => {
-    const ref = doc(db, "users", user.uid);
-    await updateDoc(ref, {
-      username: data.name,
-      email: data.email,
+  let photoUrl = user?.photoUrl || null;
+  setLoading(true);
+  try {
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      formData.append("cloud_name", CLOUD_NAME);
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        formData
+      );
+
+      photoUrl = response.data.secure_url;
+    }
+    const userDocRef = doc(db, "users", user.uid);
+    await updateDoc(userDocRef, {
+      username: name,
+      photoUrl,
     });
-    console.log("hey");
-  };
+
+    // **Update Redux store with correct keys to trigger re-render everywhere**
+    dispatch(
+      setUser({
+        ...user,
+        username: name,
+        photoUrl,
+      })
+    );
+
+    setIsModalOpen(false);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (!user) {
     return (
@@ -137,24 +163,13 @@ const Profile = () => {
                 </label>
                 <input
                   type="text"
-                  onChange={handleInputChange}
-                  value={data.name}
+                  onChange={(e) => setName(e.target.value)}
+                  value={name}
                   name="name"
                   className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-xl bg-white/5 text-white border border-white/10 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm sm:text-base"
                 />
               </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-white/60 mb-2 sm:mb-3 uppercase tracking-wider">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  onChange={handleInputChange}
-                  value={data.email}
-                  name="email"
-                  className="w-full px-3 sm:px-4 py-3 sm:py-4 rounded-xl bg-white/5 text-white border border-white/10 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all text-sm sm:text-base"
-                />
-              </div>
+
               <div>
                 <label className="block text-xs sm:text-sm text-white/60 mb-2 sm:mb-3 uppercase tracking-wider">
                   Profile Photo
@@ -187,7 +202,7 @@ const Profile = () => {
                 type="button"
                 className="w-full cursor-pointer py-2 sm:py-3 bg-white text-black hover:bg-white/90 rounded-xl font-semibold transition-all duration-200 mt-6 sm:mt-8 shadow-lg hover:shadow-xl text-sm sm:text-base"
               >
-                Save Changes
+                {loading ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

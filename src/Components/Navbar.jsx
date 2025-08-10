@@ -78,12 +78,12 @@ const Navbar = () => {
     navigate("/search");
     setMenuOpen(false);
   };
-  console.log(user?.photoUrl);
+  const avatarSrc = user?.photoUrl || user?.photo || "fallback_image_url_here";
   const UserAvatar = () => {
     if (user?.photoUrl) {
       return (
         <img
-          src={user?.photoUrl}
+          src={avatarSrc}
           alt={user?.username || "User"}
           className="w-9 h-9 rounded-full object-cover border border-gray-700 shadow-md"
         />

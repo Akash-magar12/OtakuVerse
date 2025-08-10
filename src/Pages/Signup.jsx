@@ -115,7 +115,7 @@ const Signup = () => {
   // 📌 UI Section
   // ========================
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:py-12 overflow-y-auto relative">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:py-6 overflow-y-auto relative">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center z-0"

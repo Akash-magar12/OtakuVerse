@@ -39,7 +39,6 @@ const Login = () => {
         data.password
       );
       const user = credential.user;
-      console.log(user);
 
       toast.success("Welcome to OtakuVerse!");
       setData({ email: "", password: "" });
