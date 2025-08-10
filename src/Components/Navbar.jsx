@@ -78,13 +78,13 @@ const Navbar = () => {
     navigate("/search");
     setMenuOpen(false);
   };
-
+  console.log(user?.photoUrl);
   const UserAvatar = () => {
     if (user?.photoUrl) {
       return (
         <img
-          src={user.photoUrl}
-          alt={user.username || "User"}
+          src={user?.photoUrl}
+          alt={user?.username || "User"}
           className="w-9 h-9 rounded-full object-cover border border-gray-700 shadow-md"
         />
       );
@@ -155,11 +155,11 @@ const Navbar = () => {
               {avatarMenuOpen && (
                 <div className="absolute right-0 mt-12 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg py-2 z-50">
                   <Link
-                    to="/edit-profile"
+                    to="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white"
                     onClick={closeAvatarMenu}
                   >
-                    <Edit className="h-4 w-4" /> Edit Profile
+                    <Edit className="h-4 w-4" /> Profile
                   </Link>
                   <Link
                     to="/favourite"
@@ -225,7 +225,7 @@ const Navbar = () => {
               close={closeMenu}
             />
             <MobileNavLink
-              to="/edit-profile"
+              to="/profile"
               icon={<Edit className="h-5 w-5" />}
               label="Edit Profile"
               close={closeMenu}

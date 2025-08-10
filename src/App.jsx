@@ -9,59 +9,39 @@ import GenreDetails from "./Pages/GenreDetails";
 import AllAnime from "./Pages/AllAnime";
 import Searched from "./Pages/Search";
 import NotFound from "./Pages/NotFound";
-import AllCharacters from "./Pages/AllCharacters.JSX";
+import AllCharacters from "./Pages/AllCharacters";
+import Profile from "./Pages/Profile";
+import Favourite from "./Pages/Favourite";
 const App = () => {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <AuthLayout />, // Handles Login/Signup
+      Component: AuthLayout, // Handles Login/Signup
     },
-
     {
       path: "/",
-      element: <MainLayout />,
+      Component: MainLayout,
       children: [
-        {
-          path: "/home",
-          element: <Home />,
-        },
-        {
-          path: "/anime/details/:id",
-          element: <AnimeDetails />,
-        },
-        {
-          path: "/character/:id",
-          element: <CharacterDetail />,
-        },
-        {
-          path: "/genre",
-          element: <Genre />,
-        },
-        {
-          path: "/genre/:id",
-          element: <GenreDetails />,
-        },
-        {
-          path: "/search",
-          element: <Searched />,
-        },
-        {
-          path: "/allCharacters",
-          element: <AllCharacters />,
-        },
-        { path: "/allAnime", element: <AllAnime /> },
-        { path: "/topAiring", element: <AllAnime /> },
-        { path: "/upcoming", element: <AllAnime /> },
-        { path: "/popular", element: <AllAnime /> },
-        { path: "/mostFavorited", element: <AllAnime /> },
-        { path: "/movies", element: <AllAnime /> },
-        {
-          path: "*",
-          element: <NotFound />,
-        },
+        { path: "/home", Component: Home },
+        { path: "/anime/details/:id", Component: AnimeDetails },
+        { path: "/character/:id", Component: CharacterDetail },
+        { path: "/genre", Component: Genre },
+        { path: "/genre/:id", Component: GenreDetails },
+        { path: "/search", Component: Searched },
+        { path: "/allCharacters", Component: AllCharacters },
+        { path: "/profile", Component: Profile },
+        { path: "/favourite", Component: Favourite },
+        { path: "/allAnime", Component: AllAnime },
+        { path: "/topAiring", Component: AllAnime },
+        { path: "/upcoming", Component: AllAnime },
+        { path: "/popular", Component: AllAnime },
+        { path: "/mostFavorited", Component: AllAnime },
+        { path: "/movies", Component: AllAnime },
+        { path: "*", Component: NotFound },
       ],
     },
   ]);
+
   return <RouterProvider router={router} />;
 };
 
