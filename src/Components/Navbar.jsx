@@ -78,7 +78,10 @@ const Navbar = () => {
     navigate("/search");
     setMenuOpen(false);
   };
-  const avatarSrc = user?.photoUrl || user?.photo || "fallback_image_url_here";
+  const avatarSrc =
+    user?.photoUrl ||
+    user?.photo ||
+    "https://geographyandyou.com/images/user-profile.png";
   const UserAvatar = () => {
     if (user?.photoUrl) {
       return (

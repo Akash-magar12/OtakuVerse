@@ -9,6 +9,16 @@ import AnimeGenre from "./HeroSection/AnimeGenre";
 import ActionButtons from "./HeroSection/ActionButtons";
 import { useNavigate } from "react-router-dom";
 import Loader from "./Loader";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
+import { db } from "../config/firebase";
+import toast from "react-hot-toast";
 
 const Hero = () => {
   const [anime, setAnime] = useState(null);
@@ -34,6 +44,36 @@ const Hero = () => {
   useEffect(() => {
     getAnime();
   }, []);
+
+  const handleAddFavourite = async () => {
+    try {
+      // Step 1: Check if anime already exists in favorites
+      const q = query(
+        collection(db, "favorites"),
+        where("mal_id", "==", anime.mal_id)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        toast.error("Already added to favourites!");
+        return;
+      }
+
+      // Step 2: Add new favorite
+      await addDoc(collection(db, "favorites"), {
+        mal_id: anime.mal_id,
+        title: anime.title,
+        image:
+          anime.images?.webp?.large_image_url || anime.images?.webp?.image_url,
+        addedAt: serverTimestamp(),
+      });
+
+      toast.success("Added to favourites!");
+    } catch (error) {
+      console.error("Error adding favourite:", error);
+      toast.error("Something went wrong!");
+    }
+  };
 
   if (loading) return <Loader />;
   if (error)
@@ -66,7 +106,11 @@ const Hero = () => {
             <AnimeStats anime={anime} />
             <AnimeSynopsis anime={anime} />
             <AnimeGenre anime={anime} />
-            <ActionButtons next={next} getAnime={getAnime} />
+            <ActionButtons
+              next={next}
+              getAnime={getAnime}
+              handleAddFavourite={handleAddFavourite}
+            />
           </div>
         </div>
       </div>

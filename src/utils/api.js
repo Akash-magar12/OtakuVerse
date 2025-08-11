@@ -141,7 +141,7 @@ export const fetchGenreDetails = async (genreId, page = 1) => {
 // ! Random Anime (your backend picked random from top popularity)
 export const fetchRandomAnime = async () => {
   try {
-    const response = await api.get(`/top/anime?filter=bypopularity&limit=25`);
+    const response = await api.get(`/top/anime?filter=airing`);
     const list = response.data.data;
     return list[Math.floor(Math.random() * list.length)];
   } catch (error) {
@@ -162,9 +162,7 @@ export const fetchRecommendations = async (id) => {
 // ! Search Character
 export const fetchSearchCharacter = async (query) => {
   try {
-    const response = await api.get(
-      `/characters?q=${query}&limit=20`
-    );
+    const response = await api.get(`/characters?q=${query}&limit=20`);
     return response.data.data;
   } catch (error) {
     console.error("fetchSearchCharacter error:", error.message);
