@@ -17,6 +17,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "../config/firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { logOutUser, setUser } from "../reducers/userSlice";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,6 +73,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
+    toast.success("logot ou successfully");
   };
 
   const handleSearchClick = () => {
@@ -176,7 +178,7 @@ const Navbar = () => {
                       handleLogout();
                       closeAvatarMenu();
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white w-full text-left"
+                    className="flex items-center cursor-pointer gap-2 px-4 py-2 text-gray-300 hover:bg-gray-800 hover:text-white w-full text-left"
                   >
                     <LogOut className="h-4 w-4" /> Logout
                   </button>
@@ -244,7 +246,7 @@ const Navbar = () => {
                 handleLogout();
                 closeMenu();
               }}
-              className="w-full text-left px-3 py-2 flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-800/70 rounded-md"
+              className="w-full text-left px-3 py-2 cursor-pointer flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-800/70 rounded-md"
             >
               <LogOut className="h-5 w-5" /> Logout
             </button>

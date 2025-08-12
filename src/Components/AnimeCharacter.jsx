@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { fetchAnimeCharacters } from "../utils/api";
-import Load from "./Load";
 import { setAnimeCharacter } from "../reducers/animeSlice";
+import Load from "./Load";
 
 const AnimeCharacter = () => {
   const dispatch = useDispatch();

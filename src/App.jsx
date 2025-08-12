@@ -9,9 +9,9 @@ import GenreDetails from "./Pages/GenreDetails";
 import AllAnime from "./Pages/AllAnime";
 import Searched from "./Pages/Search";
 import NotFound from "./Pages/NotFound";
-import AllCharacters from "./Pages/AllCharacters";
 import Profile from "./Pages/Profile";
 import Favourite from "./Pages/Favourite";
+import AllCharacters from "./Pages/AllCharacters.JSX";
 const App = () => {
   const router = createBrowserRouter([
     {

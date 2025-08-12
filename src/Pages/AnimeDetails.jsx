@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import Recommendations from "../components/Recommendations";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../config/firebase";
+import toast from "react-hot-toast"; // Optional for notifications
+
 import {
   Star,
   Users,
@@ -16,27 +26,79 @@ import {
   Type,
   Award,
 } from "lucide-react";
+
 import { setAnimeDetail } from "../reducers/animeSlice";
 import Load from "../Components/Load";
 import { fetchAnimeDetails } from "../utils/api";
 import AnimeCharacter from "../Components/AnimeCharacter";
+import Recommendations from "../components/Recommendations";
+import { getAuth } from "firebase/auth";
 
 const AnimeDetails = () => {
   const dispatch = useDispatch();
   const { animeDetail } = useSelector((store) => store.anime);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [isFavourite, setIsFavourite] = useState(false);
+  const [buttonDisable, setButtonDisable] = useState(false);
+
   const { id } = useParams();
 
+  // Fetch anime details from API and save to redux
   const fetchDetails = async () => {
     try {
       const response = await fetchAnimeDetails(id);
       dispatch(setAnimeDetail(response));
     } catch (err) {
       setError("Something went wrong while fetching anime details.");
-      console.log(err);
+      console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Check if anime is already in favorites collection
+  const checkIsFavourite = async () => {
+    if (!animeDetail?.mal_id) return;
+
+    try {
+      const q = query(
+        collection(db, "favorites"),
+        where("mal_id", "==", animeDetail.mal_id)
+      );
+      const querySnapshot = await getDocs(q);
+      setIsFavourite(!querySnapshot.empty);
+    } catch (error) {
+      console.error("Failed to check favourite status:", error);
+    }
+  };
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
+  // Add anime to favorites
+  const handleAddFavourite = async () => {
+    if (isFavourite) return;
+    setButtonDisable(true);
+
+    try {
+      await addDoc(collection(db, "favorites"), {
+        userId: currentUser.uid, // Make sure currentUser is from auth context
+        mal_id: animeDetail.mal_id,
+        title: animeDetail.title,
+        images: animeDetail.images,
+        score: animeDetail.score || null,
+        type: animeDetail.type || null,
+        episodes: animeDetail.episodes || null,
+        synopsis: animeDetail.synopsis || null,
+        addedAt: serverTimestamp(),
+      });
+      setIsFavourite(true);
+      toast.success("Added to favourites!");
+    } catch (error) {
+      console.error("Error adding favourite:", error);
+      toast.error("Failed to add favourite.");
+    } finally {
+      setButtonDisable(false);
     }
   };
 
@@ -45,13 +107,15 @@ const AnimeDetails = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (loading) return <Load value="anime details" />;
+  useEffect(() => {
+    checkIsFavourite();
+  }, [animeDetail]);
 
-  if (error) {
+  if (loading) return <Load value="anime details" />;
+  if (error)
     return (
       <div className="text-center text-red-500 text-lg mt-10">{error}</div>
     );
-  }
 
   const {
     title,
@@ -72,16 +136,12 @@ const AnimeDetails = () => {
     season,
     year,
     studios,
-    genres,
-    themes,
-    demographics,
     producers,
     episodes,
     streaming,
     trailer,
   } = animeDetail;
 
-  // Top stats for hero section
   const topStats = [
     {
       icon: <Star size={20} className="text-yellow-400" />,
@@ -100,7 +160,6 @@ const AnimeDetails = () => {
     },
   ];
 
-  // Information items for display
   const infoItems = [
     {
       icon: <Type size={16} />,
@@ -126,7 +185,6 @@ const AnimeDetails = () => {
     { icon: <Award size={16} />, label: "Rating", value: rating || "N/A" },
   ];
 
-  // Social stats
   const socialStats = [
     {
       icon: <Eye size={18} />,
@@ -209,62 +267,36 @@ const AnimeDetails = () => {
                   )}
                 </div>
 
-                {/* Top Stats (Desktop) */}
-                <div className="hidden md:flex gap-4 mt-4 md:mt-0">
-                  {topStats.map((stat, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col items-center bg-gray-900 rounded-lg p-3 min-w-20"
-                    >
-                      <div className="flex items-center gap-1">{stat.icon}</div>
-                      <div className="font-bold text-lg">{stat.value}</div>
-                      <div className="text-xs text-gray-400">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
+                {/* Favourite Button */}
+                <button
+                  onClick={handleAddFavourite}
+                  disabled={buttonDisable || isFavourite}
+                  className={`ml-0 md:ml-4 cursor-pointer mt-4 md:mt-0 px-4 py-2 rounded-xl text-white font-semibold transition ${
+                    isFavourite
+                      ? "bg-green-600 cursor-default"
+                      : buttonDisable
+                      ? "bg-gray-600 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {isFavourite
+                    ? "Added to Favourites"
+                    : buttonDisable
+                    ? "Adding..."
+                    : "Add to Favourites"}
+                </button>
               </div>
 
-              {/* Genres/Tags */}
-              <div className="mt-4">
-                <div className="flex flex-wrap gap-2">
-                  {genres?.map((genre) => (
-                    <span
-                      key={genre.mal_id}
-                      className="px-3 py-1 bg-blue-600/30 border border-blue-500/50 text-blue-200 text-xs rounded-full"
-                    >
-                      {genre.name}
-                    </span>
-                  ))}
-                  {themes?.map((theme) => (
-                    <span
-                      key={theme.mal_id}
-                      className="px-3 py-1 bg-purple-600/30 border border-purple-500/50 text-purple-200 text-xs rounded-full"
-                    >
-                      {theme.name}
-                    </span>
-                  ))}
-                  {demographics?.map((demo) => (
-                    <span
-                      key={demo.mal_id}
-                      className="px-3 py-1 bg-green-600/30 border border-green-500/50 text-green-200 text-xs rounded-full"
-                    >
-                      {demo.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Info Summary */}
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
-                {infoItems.slice(0, 6).map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="text-gray-400">{item.icon}</span>
-                    <div>
-                      <span className="text-xs text-gray-400">
-                        {item.label}:{" "}
-                      </span>
-                      <span className="text-sm">{item.value}</span>
-                    </div>
+              {/* Top Stats (Desktop) */}
+              <div className="hidden md:flex gap-4 mt-4 md:mt-0">
+                {topStats.map((stat, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col items-center bg-gray-900 rounded-lg p-3 min-w-20"
+                  >
+                    <div className="flex items-center gap-1">{stat.icon}</div>
+                    <div className="font-bold text-lg">{stat.value}</div>
+                    <div className="text-xs text-gray-400">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -436,6 +468,7 @@ const AnimeDetails = () => {
           </div>
         </div>
       </div>
+
       <AnimeCharacter />
       <Recommendations />
     </div>

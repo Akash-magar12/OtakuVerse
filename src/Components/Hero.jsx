@@ -19,12 +19,17 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 import toast from "react-hot-toast";
+import { getAuth } from "firebase/auth";
 
 const Hero = () => {
   const [anime, setAnime] = useState(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [buttonDisable, setButtonDisable] = useState(false);
+  const [isFavourite, setIsFavourite] = useState(false); // NEW
   const [error, setError] = useState(null);
+  const auth = getAuth();
+  const currentUser = auth.currentUser;
   const getAnime = async () => {
     setLoading(true);
     setError(null);
@@ -38,16 +43,33 @@ const Hero = () => {
       setLoading(false);
     }
   };
+
+  const checkIfFavourite = async (mal_id) => {
+    if (!mal_id) return;
+    const q = query(collection(db, "favorites"), where("mal_id", "==", mal_id));
+    const querySnapshot = await getDocs(q);
+    setIsFavourite(!querySnapshot.empty);
+  };
+
   const next = () => {
     navigate(`/anime/details/${anime.mal_id}`);
   };
+
   useEffect(() => {
     getAnime();
   }, []);
 
+  // Whenever anime changes, check if it's in favourites
+  useEffect(() => {
+    if (anime?.mal_id) {
+      checkIfFavourite(anime.mal_id);
+    }
+  }, [anime]);
+
   const handleAddFavourite = async () => {
+    if (isFavourite) return; // prevent extra calls
+    setButtonDisable(true);
     try {
-      // Step 1: Check if anime already exists in favorites
       const q = query(
         collection(db, "favorites"),
         where("mal_id", "==", anime.mal_id)
@@ -56,22 +78,29 @@ const Hero = () => {
 
       if (!querySnapshot.empty) {
         toast.error("Already added to favourites!");
+        setIsFavourite(true);
         return;
       }
 
-      // Step 2: Add new favorite
       await addDoc(collection(db, "favorites"), {
+        userId: currentUser.uid,
         mal_id: anime.mal_id,
         title: anime.title,
-        image:
-          anime.images?.webp?.large_image_url || anime.images?.webp?.image_url,
+        images: anime.images, // save full images object for flexibility
+        score: anime.score || null,
+        type: anime.type || null,
+        episodes: anime.episodes || null,
+        synopsis: anime.synopsis || null,
         addedAt: serverTimestamp(),
       });
 
+      setIsFavourite(true); // update state
       toast.success("Added to favourites!");
     } catch (error) {
       console.error("Error adding favourite:", error);
       toast.error("Something went wrong!");
+    } finally {
+      setButtonDisable(false);
     }
   };
 
@@ -82,8 +111,7 @@ const Hero = () => {
     );
 
   return (
-    <div className="min-h-[40vh] mt-18 relative flex items-center justify-center  px-4 sm:px-6 lg:px-8 overflow-hidden">
-      {/* Background Image */}
+    <div className="min-h-[40vh] mt-18 relative flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{
@@ -96,11 +124,9 @@ const Hero = () => {
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl w-full md:p-8 rounded-2xl shadow-2xl  relative z-10">
+      <div className="max-w-7xl w-full md:p-8 rounded-2xl shadow-2xl relative z-10">
         <div className="flex flex-col lg:flex-row">
           <AnimeImage anime={anime} />
-
           <div className="w-full lg:w-3/5 p-0 md:p-8">
             <AnimeDetails anime={anime} />
             <AnimeStats anime={anime} />
@@ -110,6 +136,8 @@ const Hero = () => {
               next={next}
               getAnime={getAnime}
               handleAddFavourite={handleAddFavourite}
+              buttonDisable={buttonDisable}
+              isFavourite={isFavourite} // NEW
             />
           </div>
         </div>

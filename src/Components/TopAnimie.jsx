@@ -8,7 +8,6 @@ import {
   fetchUpcoming,
 } from "../utils/api";
 import { useDispatch, useSelector } from "react-redux";
-import { setAnime } from "../reducers/AnimeSlice";
 import {
   Stars,
   Flame,
@@ -21,6 +20,7 @@ import {
 import Load from "./Load";
 import { Link } from "react-router-dom";
 import AnimeCard from "./AnimeCard";
+import { setAnime } from "../reducers/animeSlice";
 
 const TopAnime = () => {
   const dispatch = useDispatch();

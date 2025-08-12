@@ -8,7 +8,7 @@ const AuthLayout = () => {
 
   return (
     <div className="">
-      <Toaster position="top-right" autoClose={1000} />
+      <Toaster position="top-right" />
       {isLogin ? <Login /> : <Signup />}
     </div>
   );
