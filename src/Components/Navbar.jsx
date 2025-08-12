@@ -232,7 +232,7 @@ const Navbar = () => {
             <MobileNavLink
               to="/profile"
               icon={<Edit className="h-5 w-5" />}
-              label="Edit Profile"
+              label=" Profile"
               close={closeMenu}
             />
             <MobileNavLink
