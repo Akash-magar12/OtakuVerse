@@ -31,9 +31,8 @@ import { setAnimeDetail } from "../reducers/animeSlice";
 import Load from "../Components/Load";
 import { fetchAnimeDetails } from "../utils/api";
 import AnimeCharacter from "../Components/AnimeCharacter";
-import Recommendations from "../components/Recommendations";
 import { getAuth } from "firebase/auth";
-
+import Recommendations from "../Components/Recommendations";
 const AnimeDetails = () => {
   const dispatch = useDispatch();
   const { animeDetail } = useSelector((store) => store.anime);
