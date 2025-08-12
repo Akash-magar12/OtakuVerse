@@ -11,7 +11,7 @@ import Searched from "./Pages/Search";
 import NotFound from "./Pages/NotFound";
 import Profile from "./Pages/Profile";
 import Favourite from "./Pages/Favourite";
-import AllCharacters from "./Pages/AllCharacters.JSX";
+import AllCharacters from "./Pages/AllCharacters";
 const App = () => {
   const router = createBrowserRouter([
     {
