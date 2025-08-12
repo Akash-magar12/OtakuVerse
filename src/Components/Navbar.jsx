@@ -73,7 +73,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await signOut(auth);
     navigate("/");
-    toast.success("logot ou successfully");
+    toast.success("logged out successfully");
   };
 
   const handleSearchClick = () => {
