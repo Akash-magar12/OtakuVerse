@@ -40,6 +40,7 @@ const Navbar = () => {
       ? parts[0][0].toUpperCase()
       : (parts[0][0] + parts[1][0]).toUpperCase();
   };
+  console.log(user);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -54,6 +55,7 @@ const Navbar = () => {
         );
       } else {
         dispatch(logOutUser());
+        navigate('/')
       }
     });
     return () => unsubscribe();
